@@ -87,7 +87,7 @@ handle_call({config, Cfg}, _From, State=#state{config_set = false}) ->
       {use_test_dc, false} ],
 
   Config = lists:foldl(fun({Key, Val}, Acc) ->
-                           lists:keyreplace(Key, 1, Acc, {Key, Val})
+                           lists:keystore(Key, 1, Acc, {Key, Val})
                        end,
                        DefaultConfig, Cfg),
 
