@@ -18,7 +18,7 @@ Clone, `cd` to repository and compile:
     $ rebar3 compile
 
 
-Usage
+Getting started
 -----
 
 Fetch `app_id` and `app_hash` at https://my.telegram.org/apps
@@ -43,3 +43,9 @@ Example session:
 	5> tdlib:auth_password(Pid, <<"pAssWorD..1">>).
 
 When authenticated, next run with same db directory will authenticate automatically, you don't need to enter phone, code or password.
+
+
+Interface
+-----
+
+See [tdlib module documentation](doc/tdlib.html)

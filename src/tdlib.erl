@@ -16,14 +16,30 @@
 %%====================================================================
 
 
+%%====================================================================
+%% @doc Start new tdlib instance.
+%% @returns <code>{ok, Pid}</code>
+%%====================================================================
 start_link() ->
   gen_server:start_link(?MODULE, [], []).
 
 
+%%====================================================================
+%% @doc Add handler to tdlib instance.
+%% @param Handler should be pid, which will receive messages
+%%   <code>{incoming, JsonMessage}</code>
+%%====================================================================
 register_handler(Pid, Handler) ->
   gen_server:call(Pid, {register_handler, Handler}).
 
 
+%%====================================================================
+%% @doc Send tdlib configuration.
+%% @param Cfg keyword list, should have at least keys <code>api_id</code>,
+%%    <code>api_hash</code> and <code>database_directory</code>. Any other
+%%    key will override
+%%    default configuration.
+%%====================================================================
 config(Pid, Cfg) ->
   try
     case lists:keyfind(api_id, 1, Cfg) of
@@ -48,28 +64,48 @@ config(Pid, Cfg) ->
   end.
 
 
-send(Pid, Data) when is_binary(Data) ->
-  gen_server:cast(Pid, {send, Data});
+%%====================================================================
+%% @doc Send tdlib request.
+%% @param Request binary message or term to be JSON-encoded.
+%%====================================================================
+send(Pid, Request) when is_binary(Request) ->
+  gen_server:cast(Pid, {send, Request});
 
-send(Pid, Data) ->
-  Msg = jsx:encode(Data),
+send(Pid, Request) ->
+  Msg = jsx:encode(Request),
   send(Pid, Msg).
 
 
-execute(Pid, Data) when is_binary(Data) ->
-  gen_server:call(Pid, {execute, Data});
+%%====================================================================
+%% @doc Execute synchronous tdlib request.
+%% @param Request binary or term to be JSON-encoded
+%%====================================================================
+execute(Pid, Request) when is_binary(Request) ->
+  gen_server:call(Pid, {execute, Request});
 
-execute(Pid, Data) ->
-  Msg = jsx:encode(Data),
+execute(Pid, Request) ->
+  Msg = jsx:encode(Request),
   execute(Pid, Msg).
 
 
+%%====================================================================
+%% @doc Send phone number.
+%% @param PhoneNumber should be binary.
+%%====================================================================
 phone_number(Pid, PhoneNumber) when is_binary(PhoneNumber) ->
   gen_server:cast(Pid, {phone_number, PhoneNumber}).
 
+%%====================================================================
+%% @doc Send authentication code.
+%% @param Code should be binary.
+%%====================================================================
 auth_code(Pid, Code) when is_binary(Code) ->
   gen_server:cast(Pid, {auth_code, Code}).
 
+%%====================================================================
+%% @doc Send password.
+%% @param Password should be binary.
+%%====================================================================
 auth_password(Pid, Password) when is_binary(Password) ->
   gen_server:cast(Pid, {auth_password, Password}).
 
@@ -78,11 +114,13 @@ auth_password(Pid, Password) when is_binary(Password) ->
 %% callbacks
 %%====================================================================
 
+%% @private
 init([]) ->
   self() ! init,
   {ok, #state{}}.
 
 
+%% @private
 handle_info(init, State) ->
   {ok, Tdlib} = tdlib_nif:new(),
   self() ! poll,
@@ -115,6 +153,7 @@ handle_info(_Msg, State) ->
   {noreply, State}.
 
 
+%% @private
 handle_call({config, Cfg}, _From, State=#state{auth_state = <<"authorizationStateWaitTdlibParameters">>}) ->
   DefaultConfig =
     [ {<<"application_version">>, <<"Unknown">>},
@@ -154,6 +193,7 @@ handle_call(_Msg, _From, State) ->
   {reply, ok, State}.
 
 
+%% @private
 handle_cast({auth_state, AuthState}, State) ->
   {noreply, State#state{auth_state = AuthState}};
 
@@ -179,18 +219,21 @@ handle_cast(_Msg, State) ->
   {noreply, State}.
 
 
+%% @private
 code_change(_OldVsn, State, _Extra) -> { ok, State }.
 
-
+%% @private
 terminate(_, _) -> ok.
 
 %%====================================================================
 %% helpers
 %%====================================================================
 
+%% @private
 method(Type, Params) ->
     [{'@type', Type} | Params].
 
+%% @private
 handle_auth(Pid, Data) ->
   {_, AuthState} = lists:keyfind(<<"authorization_state">>, 1, Data),
   {_, AuthStateType} = lists:keyfind(<<"@type">>, 1, AuthState),
@@ -212,5 +255,6 @@ handle_auth(Pid, Data) ->
     _ -> ok
   end.
 
+%% @private
 set_auth_state(Pid, AuthStateType) ->
   gen_server:cast(Pid, {auth_state, AuthStateType}).
