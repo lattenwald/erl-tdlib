@@ -62,7 +62,7 @@ fn receive<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
 }
 
 rustler_export_nifs!(
-    "tdlib",
+    "tdlib_nif",
     [
         ("new", 0, new),
         ("send", 2, send),
