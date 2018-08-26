@@ -23,7 +23,7 @@ Usage
 
 Fetch `app_id` and `app_hash` at https://my.telegram.org/apps
 
-There we will consider use following placeholders:
+In this example we will use following placeholders:
 
  * `app_id` : `34567`
  * `app_hash` : `qwertyasdfgh123456qweytr`
