@@ -6,6 +6,7 @@ extern crate rust_tdlib;
 
 use rustler::resource::ResourceArc;
 use rustler::{Encoder, Env, Error, Term};
+use rustler::schedule::SchedulerFlags;
 
 use rust_tdlib::Tdlib;
 
@@ -67,7 +68,7 @@ rustler_export_nifs!(
         ("new", 0, new),
         ("send", 2, send),
         ("execute", 2, execute),
-        ("recv", 2, receive)
+        ("recv", 2, receive, SchedulerFlags::DirtyIo)
     ],
     Some(on_load)
 );
