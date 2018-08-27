@@ -2,14 +2,14 @@
 
 -behaviour(gen_server).
 
--export([start_link/0, start_link/1]).
+-export([start_link/0, start_link/2]).
 -export([handle_call/3, handle_cast/2, init/1, handle_info/2, code_change/3, terminate/2]).
 -export([register_handler/2, config/2, send/2, execute/2, method/2]).
 -export([phone_number/2, auth_code/2, auth_password/2]).
 
 -define(RECEIVE_TIMEOUT, 5.0).
 
--record(state, {tdlib = null, handlers = [], auth_state = null}).
+-record(state, {tdlib = null, handlers = [], auth_state = null, config = null}).
 
 %%====================================================================
 %% API functions
@@ -21,14 +21,16 @@
 %% @returns <code>{ok, Pid}</code>
 %%====================================================================
 start_link() ->
-  gen_server:start_link(?MODULE, [], []).
+  gen_server:start_link(?MODULE, null, []).
 
 
 %%====================================================================
-%% @doc Start new tdlib instance and register it.
+%% @doc Start new tdlib instance, register it and send config when ready.
+%% @see config/2
+%% @returns <code>{ok, Pid}</code>
 %%====================================================================
-start_link(Name) ->
-  gen_server:start_link(Name, ?MODULE, [], []).
+start_link(Name, Config) ->
+  gen_server:start_link(Name, ?MODULE, Config, []).
 
 
 %%====================================================================
@@ -122,9 +124,9 @@ auth_password(Pid, Password) when is_binary(Password) ->
 %%====================================================================
 
 %% @private
-init([]) ->
+init(Config) ->
   self() ! init,
-  {ok, #state{}}.
+  {ok, #state{config = Config}}.
 
 
 %% @private
@@ -145,11 +147,13 @@ handle_info(poll, State=#state{tdlib = Tdlib, handlers = Handlers}) ->
                 case lists:keyfind(<<"@type">>, 1, Data) of
                   {_, <<"updateAuthorizationState">>} ->
                     handle_auth(Parent, Data);
-                  _ ->
-                    lists:foreach(
-                      fun(Handler) -> Handler ! {incoming, Data} end,
-                      Handlers )
-                end;
+                  _ -> ok
+                end,
+
+                lists:foreach(
+                  fun(Handler) -> Handler ! {incoming, Data} end,
+                  Handlers );
+
               null -> ok
             end,
             Parent ! poll
@@ -201,6 +205,11 @@ handle_call(_Msg, _From, State) ->
 
 
 %% @private
+handle_cast(send_config, State=#state{config = Config}) when Config /= null ->
+  Parent = self(),
+  spawn(fun() -> config(Parent, Config) end),
+  {noreply, State};
+
 handle_cast({auth_state, AuthState}, State) ->
   {noreply, State#state{auth_state = AuthState}};
 
@@ -246,6 +255,9 @@ handle_auth(Pid, Data) ->
   {_, AuthStateType} = lists:keyfind(<<"@type">>, 1, AuthState),
   set_auth_state(Pid, AuthStateType),
   case AuthStateType of
+    <<"authorizationStateWaitTdlibParameters">> ->
+      send_config(Pid);
+
     <<"authorizationStateWaitEncryptionKey">> ->
       send(Pid, method(<<"checkDatabaseEncryptionKey">>,
                        [{<<"encryption_key">>, null}]));
@@ -265,3 +277,7 @@ handle_auth(Pid, Data) ->
 %% @private
 set_auth_state(Pid, AuthStateType) ->
   gen_server:cast(Pid, {auth_state, AuthStateType}).
+
+%% @private
+send_config(Pid) ->
+  gen_server:cast(Pid, send_config).
