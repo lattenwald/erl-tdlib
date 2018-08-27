@@ -18,6 +18,7 @@
 
 %%====================================================================
 %% @doc Start new tdlib instance.
+%%
 %% @returns <code>{ok, Pid}</code>
 %%====================================================================
 start_link() ->
@@ -26,6 +27,7 @@ start_link() ->
 
 %%====================================================================
 %% @doc Start new tdlib instance, register it and send config when ready.
+%%
 %% @see config/2
 %% @returns <code>{ok, Pid}</code>
 %%====================================================================
@@ -35,8 +37,10 @@ start_link(Name, Config) ->
 
 %%====================================================================
 %% @doc Add handler to tdlib instance.
+%%
+%% @param Pid tdlib gen_server pid
 %% @param Handler should be pid, which will receive messages
-%%   <code>{incoming, JsonMessage}</code>
+%% <code>{incoming, JsonMessage}</code>
 %%====================================================================
 register_handler(Pid, Handler) ->
   gen_server:call(Pid, {register_handler, Handler}).
@@ -44,10 +48,12 @@ register_handler(Pid, Handler) ->
 
 %%====================================================================
 %% @doc Send tdlib configuration.
+%%
+%% @param Pid tdlib gen_server pid
 %% @param Cfg keyword list, should have at least keys <code>api_id</code>,
-%%    <code>api_hash</code> and <code>database_directory</code>. Any other
-%%    key will override
-%%    default configuration.
+%% <code>api_hash</code> and <code>database_directory</code>. Any other
+%% key will override
+%% default configuration.
 %%====================================================================
 config(Pid, Cfg) ->
   try
@@ -75,6 +81,8 @@ config(Pid, Cfg) ->
 
 %%====================================================================
 %% @doc Send tdlib request.
+%%
+%% @param Pid tdlib gen_server pid
 %% @param Request binary message or term to be JSON-encoded.
 %%====================================================================
 send(Pid, Request) when is_binary(Request) ->
@@ -87,6 +95,8 @@ send(Pid, Request) ->
 
 %%====================================================================
 %% @doc Execute synchronous tdlib request.
+%%
+%% @param Pid tdlib gen_server pid
 %% @param Request binary or term to be JSON-encoded
 %%====================================================================
 execute(Pid, Request) when is_binary(Request) ->
@@ -99,6 +109,8 @@ execute(Pid, Request) ->
 
 %%====================================================================
 %% @doc Send phone number.
+%%
+%% @param Pid tdlib gen_server pid
 %% @param PhoneNumber should be binary.
 %%====================================================================
 phone_number(Pid, PhoneNumber) when is_binary(PhoneNumber) ->
@@ -106,6 +118,8 @@ phone_number(Pid, PhoneNumber) when is_binary(PhoneNumber) ->
 
 %%====================================================================
 %% @doc Send authentication code.
+%%
+%% @param Pid tdlib gen_server pid
 %% @param Code should be binary.
 %%====================================================================
 auth_code(Pid, Code) when is_binary(Code) ->
@@ -113,6 +127,8 @@ auth_code(Pid, Code) when is_binary(Code) ->
 
 %%====================================================================
 %% @doc Send password.
+%%
+%% @param Pid tdlib gen_server pid
 %% @param Password should be binary.
 %%====================================================================
 auth_password(Pid, Password) when is_binary(Password) ->
