@@ -48,4 +48,4 @@ When authenticated, next run with same db directory will authenticate automatica
 Interface
 -----
 
-See [tdlib module documentation](doc/tdlib.html)
+See [edoc documentation](doc/README.md)

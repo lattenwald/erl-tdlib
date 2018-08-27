@@ -2,7 +2,7 @@
 
 -behaviour(gen_server).
 
--export([start_link/0]).
+-export([start_link/0, start_link/1]).
 -export([handle_call/3, handle_cast/2, init/1, handle_info/2, code_change/3, terminate/2]).
 -export([register_handler/2, config/2, send/2, execute/2, method/2]).
 -export([phone_number/2, auth_code/2, auth_password/2]).
@@ -22,6 +22,13 @@
 %%====================================================================
 start_link() ->
   gen_server:start_link(?MODULE, [], []).
+
+
+%%====================================================================
+%% @doc Start new tdlib instance and register it.
+%%====================================================================
+start_link(Name) ->
+  gen_server:start_link(Name, ?MODULE, [], []).
 
 
 %%====================================================================
