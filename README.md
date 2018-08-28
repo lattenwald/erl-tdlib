@@ -49,7 +49,7 @@ Another example, with registering tdlib server (any valid `ServerName` from [gen
     $ rebar3 shell
 
     1> {ok, Pid} = tdlib:start_link({local, session1}, [{api_id, <<"34567">>}, {api_hash, <<"qwertyasdfgh123456qweytr">>}, {database_directory, <<"tdlib_db">>}]).
-	2> 2> whereis(session1).
+    2> whereis(session1).
     <0.186.0>
 
 
