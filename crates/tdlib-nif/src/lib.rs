@@ -5,8 +5,8 @@ extern crate rustler;
 extern crate rust_tdlib;
 
 use rustler::resource::ResourceArc;
-use rustler::{Encoder, Env, Error, Term};
 use rustler::schedule::SchedulerFlags;
+use rustler::{Encoder, Env, Error, Term};
 
 use rust_tdlib::Tdlib;
 
@@ -48,8 +48,10 @@ fn execute<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
     let tdlib: ResourceArc<ErlTdlib> = args[0].decode()?;
     let request: &str = args[1].decode()?;
 
-    let resp = tdlib.tdlib.execute(request);
-    Ok((atoms::ok(), resp).encode(env))
+    match tdlib.tdlib.execute(request) {
+        None => Ok(atoms::null().encode(env)),
+        Some(resp) => Ok((atoms::ok(), resp).encode(env)),
+    }
 }
 
 fn receive<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {

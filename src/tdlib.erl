@@ -98,6 +98,9 @@ send(Pid, Request) ->
 %%
 %% @param Pid tdlib gen_server pid
 %% @param Request binary or term to be JSON-encoded
+%% @returns <code>{ok, JsonData}</code> or <code>null</code> if
+%% tdlib was unable to parse request. See
+%% <a href="https://core.telegram.org/tdlib/docs/td__json__client_8h.html#a6d6c76380793072d4a9ce3c71ba0f1cf"><tt>tdlib execute method documentation</tt></a>
 %%====================================================================
 execute(Pid, Request) when is_binary(Request) ->
   gen_server:call(Pid, {execute, Request});
