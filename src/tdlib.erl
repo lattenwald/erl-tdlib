@@ -204,7 +204,7 @@ set_log_max_file_size(Size) ->
 %% @private
 init(Config) ->
   self() ! init,
-  {ok, #state{config = Config, handlers = mapset:new()}}.
+  {ok, #state{config = Config, handlers = sets:new()}}.
 
 
 %% @private
@@ -230,7 +230,7 @@ handle_info(poll, State=#state{tdlib = Tdlib, handlers = Handlers}) ->
 
                 lists:foreach(
                   fun(Handler) -> Handler ! {incoming, Data} end,
-                  mapset:to_list(Handlers) );
+                  sets:to_list(Handlers) );
 
               null -> ok
             end,
