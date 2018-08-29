@@ -79,7 +79,7 @@ fn set_log_max_file_size<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>
 }
 
 fn set_log_file_path<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let path: &str = args[0].decode()?;
+    let path: Option<&str> = args[0].decode()?;
     match Tdlib::set_log_file_path(path) {
         true => Ok(atoms::ok().encode(env)),
         false => Ok(atoms::error().encode(env)),

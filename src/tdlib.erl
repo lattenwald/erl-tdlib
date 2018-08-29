@@ -6,7 +6,7 @@
 -export([handle_call/3, handle_cast/2, init/1, handle_info/2, code_change/3, terminate/2]).
 -export([register_handler/2, config/2, send/2, execute/2, method/2]).
 -export([phone_number/2, auth_code/2, auth_password/2]).
--export([set_log_verbosity_level/1, set_log_file_path/1, set_log_max_file_size/1]).
+-export([set_log_verbosity_level/1, set_log_file_path/0, set_log_file_path/1, set_log_max_file_size/1]).
 
 -define(RECEIVE_TIMEOUT, 5.0).
 
@@ -139,6 +139,18 @@ auth_password(Pid, Password) when is_binary(Password) ->
   gen_server:cast(Pid, {auth_password, Password}).
 
 
+
+%%====================================================================
+%% @doc Set log logging behaviour to default.
+%%
+%% By default TDLib writes logs to stderr or an OS specific log. Use this
+%% method restore such behaviour.
+%%
+%% @see tdlib:set_log_file_path/1.
+%%====================================================================
+set_log_file_path() ->
+  tdlib_nif:set_log_file_path(nil).
+
 %%====================================================================
 %% @doc Set log file path.
 %%
@@ -147,7 +159,9 @@ auth_password(Pid, Password) when is_binary(Password) ->
 %% method to write the log to a file instead.
 %%
 %% @param Path Path to a file where the internal TDLib log will be written.
-%% Use an empty path to switch back to the default logging behaviour.
+%% Use an <code>nil</code> to switch back to the default logging behaviour.
+%%
+%% @see set_log_file_path/0.
 %%====================================================================
 set_log_file_path(Path) ->
   tdlib_nif:set_log_file_path(Path).

@@ -11,7 +11,7 @@ __Behaviours:__ [`gen_server`](gen_server.md).
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#auth_code-2">auth_code/2</a></td><td>Send authentication code.</td></tr><tr><td valign="top"><a href="#auth_password-2">auth_password/2</a></td><td>Send password.</td></tr><tr><td valign="top"><a href="#config-2">config/2</a></td><td>Send tdlib configuration.</td></tr><tr><td valign="top"><a href="#execute-2">execute/2</a></td><td>Execute synchronous tdlib request.</td></tr><tr><td valign="top"><a href="#phone_number-2">phone_number/2</a></td><td>Send phone number.</td></tr><tr><td valign="top"><a href="#register_handler-2">register_handler/2</a></td><td>Add handler to tdlib instance.</td></tr><tr><td valign="top"><a href="#send-2">send/2</a></td><td>Send tdlib request.</td></tr><tr><td valign="top"><a href="#set_log_file_path-1">set_log_file_path/1</a></td><td>Set log file path.</td></tr><tr><td valign="top"><a href="#set_log_max_file_size-1">set_log_max_file_size/1</a></td><td>Set max log file size.</td></tr><tr><td valign="top"><a href="#set_log_verbosity_level-1">set_log_verbosity_level/1</a></td><td>Set tdlib log verbosity level.</td></tr><tr><td valign="top"><a href="#start_link-0">start_link/0</a></td><td>Start new tdlib instance.</td></tr><tr><td valign="top"><a href="#start_link-2">start_link/2</a></td><td>Start new tdlib instance, register it and send config when ready.</td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#auth_code-2">auth_code/2</a></td><td>Send authentication code.</td></tr><tr><td valign="top"><a href="#auth_password-2">auth_password/2</a></td><td>Send password.</td></tr><tr><td valign="top"><a href="#config-2">config/2</a></td><td>Send tdlib configuration.</td></tr><tr><td valign="top"><a href="#execute-2">execute/2</a></td><td>Execute synchronous tdlib request.</td></tr><tr><td valign="top"><a href="#phone_number-2">phone_number/2</a></td><td>Send phone number.</td></tr><tr><td valign="top"><a href="#register_handler-2">register_handler/2</a></td><td>Add handler to tdlib instance.</td></tr><tr><td valign="top"><a href="#send-2">send/2</a></td><td>Send tdlib request.</td></tr><tr><td valign="top"><a href="#set_log_file_path-0">set_log_file_path/0</a></td><td>Set log logging behaviour to default.</td></tr><tr><td valign="top"><a href="#set_log_file_path-1">set_log_file_path/1</a></td><td>Set log file path.</td></tr><tr><td valign="top"><a href="#set_log_max_file_size-1">set_log_max_file_size/1</a></td><td>Set max log file size.</td></tr><tr><td valign="top"><a href="#set_log_verbosity_level-1">set_log_verbosity_level/1</a></td><td>Set tdlib log verbosity level.</td></tr><tr><td valign="top"><a href="#start_link-0">start_link/0</a></td><td>Start new tdlib instance.</td></tr><tr><td valign="top"><a href="#start_link-2">start_link/2</a></td><td>Start new tdlib instance, register it and send config when ready.</td></tr></table>
 
 
 <a name="functions"></a>
@@ -74,6 +74,19 @@ Add handler to tdlib instance.
 
 Send tdlib request.
 
+<a name="set_log_file_path-0"></a>
+
+### set_log_file_path/0 ###
+
+`set_log_file_path() -> any()`
+
+Set log logging behaviour to default.
+
+By default TDLib writes logs to stderr or an OS specific log. Use this
+method restore such behaviour.
+
+__See also:__ [====================================================================](tdlib.md#set_log_file_path-1).
+
 <a name="set_log_file_path-1"></a>
 
 ### set_log_file_path/1 ###
@@ -85,6 +98,8 @@ Set log file path.
 Sets the path to the file where the internal TDLib log will be written.
 By default TDLib writes logs to stderr or an OS specific log. Use this
 method to write the log to a file instead.
+
+__See also:__ [====================================================================](#set_log_file_path-0).
 
 <a name="set_log_max_file_size-1"></a>
 
