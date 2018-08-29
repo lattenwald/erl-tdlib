@@ -10,7 +10,7 @@
 
 -define(RECEIVE_TIMEOUT, 5.0).
 
--record(state, {tdlib = null, handlers = [], auth_state = null, config = null}).
+-record(state, {tdlib = null, handlers, auth_state = null, config = null}).
 
 %%====================================================================
 %% API functions
@@ -204,7 +204,7 @@ set_log_max_file_size(Size) ->
 %% @private
 init(Config) ->
   self() ! init,
-  {ok, #state{config = Config}}.
+  {ok, #state{config = Config, handlers = mapset:new()}}.
 
 
 %% @private
@@ -230,7 +230,7 @@ handle_info(poll, State=#state{tdlib = Tdlib, handlers = Handlers}) ->
 
                 lists:foreach(
                   fun(Handler) -> Handler ! {incoming, Data} end,
-                  Handlers );
+                  mapset:to_list(Handlers) );
 
               null -> ok
             end,
@@ -277,6 +277,10 @@ handle_call({config, Cfg}, _From, State=#state{auth_state = <<"authorizationStat
 handle_call({execute, Data}, _From, State=#state{tdlib = Tdlib}) ->
   Resp = tdlib_nif:execute(Tdlib, Data),
   {reply, Resp, State};
+
+handle_call({register_handler, Handler}, _From, State=#state{handlers = Handlers}) ->
+  NewHandlers = sets:add_element(Handler, Handlers),
+  {reply, ok, State#state{handlers = NewHandlers}};
 
 handle_call(_Msg, _From, State) ->
   {reply, ok, State}.
