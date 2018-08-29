@@ -85,7 +85,7 @@ Set log logging behaviour to default.
 By default TDLib writes logs to stderr or an OS specific log. Use this
 method restore such behaviour.
 
-__See also:__ [====================================================================](tdlib.md#set_log_file_path-1).
+__See also:__ [set_log_file_path/1](#set_log_file_path-1).
 
 <a name="set_log_file_path-1"></a>
 
@@ -99,7 +99,7 @@ Sets the path to the file where the internal TDLib log will be written.
 By default TDLib writes logs to stderr or an OS specific log. Use this
 method to write the log to a file instead.
 
-__See also:__ [====================================================================](#set_log_file_path-0).
+__See also:__ [set_log_file_path/0](#set_log_file_path-0).
 
 <a name="set_log_max_file_size-1"></a>
 

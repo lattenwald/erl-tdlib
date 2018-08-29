@@ -143,10 +143,11 @@ auth_password(Pid, Password) when is_binary(Password) ->
 %%====================================================================
 %% @doc Set log logging behaviour to default.
 %%
+%%
 %% By default TDLib writes logs to stderr or an OS specific log. Use this
 %% method restore such behaviour.
-%%
-%% @see tdlib:set_log_file_path/1.
+%% @see set_log_file_path/1
+%% @end
 %%====================================================================
 set_log_file_path() ->
   tdlib_nif:set_log_file_path(nil).
@@ -160,8 +161,8 @@ set_log_file_path() ->
 %%
 %% @param Path Path to a file where the internal TDLib log will be written.
 %% Use an <code>nil</code> to switch back to the default logging behaviour.
-%%
-%% @see set_log_file_path/0.
+%% @see set_log_file_path/0
+%% @end
 %%====================================================================
 set_log_file_path(Path) ->
   tdlib_nif:set_log_file_path(Path).
