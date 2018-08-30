@@ -217,7 +217,7 @@ handle_info(poll, State=#state{tdlib = Tdlib, handlers = Handlers}) ->
   Parent = self(),
   spawn(fun() ->
             Resp = tdlib_nif:recv(Tdlib, ?RECEIVE_TIMEOUT),
-            io:format("recv: ~p~n", [Resp]), %% XXX debug
+            lager:debug("recv: ~p", [Resp]),
             case Resp of
               {ok, Msg} ->
                 Data = jsx:decode(Msg),
@@ -345,19 +345,20 @@ handle_auth(Pid, Data) ->
                        [{<<"encryption_key">>, null}]));
 
     <<"setAuthenticationPhoneNumber">> ->
-      io:format("Waiting for phone number~n");
+      lager:info("Waiting for phone number");
 
     <<"checkAuthenticationCode">> ->
-      io:format("Waiiting for authentication code~n");
+      lager:info("Waiiting for authentication code");
 
     <<"checkAuthenticationPassword">> ->
-      io:format("Waiiting for password~n");
+      lager:info("Waiiting for password");
 
     _ -> ok
   end.
 
 %% @private
 set_auth_state(Pid, AuthStateType) ->
+  lager:info("setting auth state to ~p", AuthStateType),
   gen_server:cast(Pid, {auth_state, AuthStateType}).
 
 %% @private

@@ -4,9 +4,12 @@
   {registered, []},
   {applications,
    [kernel,
-    stdlib
+    stdlib,
+	lager
    ]},
-  {env,[]},
+  {env,
+   [ { lager, [ { handlers,
+				  [ { lager_console_backend, [{level, info}] } ] } ] } ] },
   {modules, []},
 
   {maintainers, []},
