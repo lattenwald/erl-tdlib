@@ -360,7 +360,7 @@ handle_auth(Pid, Data) ->
 
 %% @private
 set_auth_state(Pid, AuthStateType) ->
-  lager:info("setting auth state to ~p", AuthStateType),
+  lager:info("setting auth state to ~p", [AuthStateType]),
   gen_server:cast(Pid, {auth_state, AuthStateType}).
 
 %% @private
