@@ -58,3 +58,9 @@ Interface
 -----
 
 See [edoc documentation](doc/README.md)
+
+
+Building docs
+-----
+
+	$ rebar3 edoc
