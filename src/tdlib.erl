@@ -9,6 +9,7 @@
 -export([register_handler/2, config/2, send/2, execute/2, method/2]).
 -export([phone_number/2, auth_code/2, auth_password/2]).
 -export([set_log_verbosity_level/1, set_log_file_path/0, set_log_file_path/1, set_log_max_file_size/1]).
+-export([get_handlers/1, get_auth_state/1, get_config/1]).
 
 -define(RECEIVE_TIMEOUT, 5.0).
 
@@ -200,6 +201,30 @@ set_log_max_file_size(Size) ->
   tdlib_nif:set_log_max_file_size(Size).
 
 %%====================================================================
+%% @doc Get list of current handlers.
+%%
+%% @param Pid tdlib gen_server pid
+%%====================================================================
+get_handlers(Pid) ->
+  gen_server:call(Pid, get_handlers).
+
+%%====================================================================
+%% @doc Get current auth state of tdlib.
+%%
+%% @param Pid tdlib gen_server pid
+%%====================================================================
+get_auth_state(Pid) ->
+  gen_server:call(Pid, get_auth_state).
+
+%%====================================================================
+%% @doc Get tdlib configuration.
+%%
+%% @param Pid tdlib gen_server pid
+%%====================================================================
+get_config(Pid) ->
+  gen_server:call(Pid, get_config).
+
+%%====================================================================
 %% callbacks
 %%====================================================================
 
@@ -274,7 +299,7 @@ handle_call({config, Cfg}, _From, State=#state{auth_state = <<"authorizationStat
 
   send(self(), Request),
 
-  {reply, Cfg, State};
+  {reply, Cfg, State#state{config = Config}};
 
 handle_call({execute, Data}, _From, State=#state{tdlib = Tdlib}) ->
   Resp = tdlib_nif:execute(Tdlib, Data),
@@ -283,6 +308,15 @@ handle_call({execute, Data}, _From, State=#state{tdlib = Tdlib}) ->
 handle_call({register_handler, Handler}, _From, State=#state{handlers = Handlers}) ->
   NewHandlers = sets:add_element(Handler, Handlers),
   {reply, ok, State#state{handlers = NewHandlers}};
+
+handle_call(get_handlers, _From, State=#state{handlers = Handlers}) ->
+  {reply, Handlers, State};
+
+handle_call(get_auth_state, _From, State=#state{auth_state = AuthState}) ->
+  {reply, AuthState, State};
+
+handle_call(get_config, _From, State=#state{config = Config}) ->
+  {reply, Config, State};
 
 handle_call(_Msg, _From, State) ->
   {reply, ok, State}.
