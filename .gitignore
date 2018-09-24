@@ -21,3 +21,6 @@ rebar3.crashdump
 crates/*/target
 priv/*
 !priv/.keep
+
+/tdlib*
+*.org
