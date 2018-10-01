@@ -90,7 +90,7 @@ config(Pid, Cfg) ->
 %% @param Request binary message or term to be JSON-encoded.
 %%====================================================================
 send(Pid, Request) when is_binary(Request) ->
-  gen_server:cast(Pid, {send, Request});
+  gen_server:call(Pid, {send, Request});
 
 send(Pid, Request) ->
   Msg = jsx:encode(Request),
@@ -318,6 +318,10 @@ handle_call(get_auth_state, _From, State=#state{auth_state = AuthState}) ->
 handle_call(get_config, _From, State=#state{config = Config}) ->
   {reply, Config, State};
 
+handle_call({call, Request}, _From, State=#state{tdlib = Tdlib}) ->
+  Res = tdlib_nif:send(Tdlib, Request),
+  {reply, Res, State};
+
 handle_call(_Msg, _From, State) ->
   {reply, ok, State}.
 
@@ -330,10 +334,6 @@ handle_cast(send_config, State=#state{config = Config}) when Config /= null ->
 
 handle_cast({auth_state, AuthState}, State) ->
   {noreply, State#state{auth_state = AuthState}};
-
-handle_cast({send, Request}, State=#state{tdlib = Tdlib}) ->
-  tdlib_nif:send(Tdlib, Request),
-  {noreply, State};
 
 handle_cast({phone_number, PhoneNumber}, State=#state{auth_state = <<"authorizationStateWaitPhoneNumber">>}) ->
   send(self(), method(<<"setAuthenticationPhoneNumber">>,
