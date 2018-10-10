@@ -6,14 +6,16 @@
 
 -export([start_link/0, start_link/2]).
 -export([handle_call/3, handle_cast/2, init/1, handle_info/2, code_change/3, terminate/2]).
--export([register_handler/2, config/2, send/2, execute/2, method/2]).
+-export([register_handler/2, config/2, send/2, execute/2, method/2, send_sync/2, send_sync/3]).
 -export([phone_number/2, auth_code/2, auth_password/2]).
 -export([set_log_verbosity_level/1, set_log_file_path/0, set_log_file_path/1, set_log_max_file_size/1]).
 -export([get_handlers/1, get_auth_state/1, get_config/1]).
 
 -define(RECEIVE_TIMEOUT, 5.0).
+-define(SEND_SYNC_TIMEOUT, 5000).
 
--record(state, {tdlib = null, handlers, auth_state = null, config = null}).
+-record(state, { tdlib = null, handlers, auth_state = null, config = null
+               , extra = #{}, extra_index = 0 }).
 
 %%====================================================================
 %% API functions
@@ -95,6 +97,30 @@ send(Pid, Request) when is_binary(Request) ->
 send(Pid, Request) ->
   Msg = jsx:encode(Request),
   send(Pid, Msg).
+
+
+%%====================================================================
+%% @doc Send tdlib request and block until response is received.
+%%
+%% @see send_sync/3
+%%====================================================================
+send_sync(Pid, Request) ->
+  send_sync(Pid, Request, ?SEND_SYNC_TIMEOUT).
+
+%%====================================================================
+%% @doc Send tdlib request and block until response is received.
+%%
+%% @param Pid tdlib gen_server pid
+%% @param Request list of pairs to be JSON-encoded.
+%% @param Timeout timeout
+%% @returns decoded response or <code>{error, timeout}</code>
+%%====================================================================
+send_sync(Pid, Request, Timeout) ->
+  try
+    gen_server:call(Pid, {send_sync, Request}, Timeout)
+  catch
+    _:{timeout, _} -> {error, timeout}
+  end.
 
 
 %%====================================================================
@@ -240,7 +266,7 @@ handle_info(init, State) ->
   self() ! poll,
   {noreply, State#state{tdlib = Tdlib}};
 
-handle_info(poll, State=#state{tdlib = Tdlib, handlers = Handlers}) ->
+handle_info(poll, State=#state{tdlib = Tdlib, handlers = Handlers, extra = Extra}) ->
   Parent = self(),
   spawn(fun() ->
             Resp = tdlib_nif:recv(Tdlib, ?RECEIVE_TIMEOUT),
@@ -249,15 +275,29 @@ handle_info(poll, State=#state{tdlib = Tdlib, handlers = Handlers}) ->
               {ok, Msg} ->
                 Data = jsx:decode(Msg),
 
-                case lists:keyfind(<<"@type">>, 1, Data) of
-                  {_, <<"updateAuthorizationState">>} ->
-                    handle_auth(Parent, Data);
-                  _ -> ok
-                end,
+                SyncReply =
+                  case lists:keyfind(<<"@extra">>, 1, Data) of
+                    {_, E} -> maps:get(E, Extra, null);
+                    false -> null
+                  end,
 
-                lists:foreach(
-                  fun(Handler) -> Handler ! {incoming, Data} end,
-                  sets:to_list(Handlers) );
+                case SyncReply of
+                  null ->
+                    case lists:keyfind(<<"@type">>, 1, Data) of
+                      {_, <<"updateAuthorizationState">>} ->
+                        handle_auth(Parent, Data);
+                      _ -> ok
+                    end,
+
+                    lists:foreach(
+                      fun(Handler) ->
+                          Handler ! {incoming, Data}
+                      end,
+                      sets:to_list(Handlers) );
+
+                  _ ->
+                    gen_server:reply(SyncReply, Data)
+                end;
 
               null -> ok
             end,
@@ -304,6 +344,13 @@ handle_call({config, Cfg}, _From, State=#state{auth_state = <<"authorizationStat
 handle_call({execute, Data}, _From, State=#state{tdlib = Tdlib}) ->
   Resp = tdlib_nif:execute(Tdlib, Data),
   {reply, Resp, State};
+
+handle_call({send_sync, Request}, From, State=#state{extra = Extra, extra_index = Index}) ->
+  RequestWithExtra = [{<<"@extra">>, Index} | Request],
+  NewExtra = maps:put(Index, From, Extra),
+  NewIndex = Index + 1,
+  send(self(), RequestWithExtra),
+  {noreply, State#state{extra = NewExtra, extra_index = NewIndex}};
 
 handle_call({register_handler, Handler}, _From, State=#state{handlers = Handlers}) ->
   NewHandlers = sets:add_element(Handler, Handlers),
