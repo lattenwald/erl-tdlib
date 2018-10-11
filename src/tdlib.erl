@@ -113,18 +113,16 @@ send_sync(Pid, Request) ->
 %%====================================================================
 %% @doc Send tdlib request and block until response is received.
 %%
+%% Inside it's a <code>gen_server:call</code>, so expect
+%% <code>{timeout, _}</code> error if you need to handle this.
+%%
 %% @param Pid tdlib gen_server pid
 %% @param Request list of pairs to be JSON-encoded.
 %% @param Timeout timeout
-%% @returns decoded response or <code>{error, timeout}</code>
+%% @returns decoded response
 %%====================================================================
 send_sync(Pid, Request, Timeout) ->
-  try
-    gen_server:call(Pid, {send_sync, Request, Timeout}, Timeout)
-  catch
-    _:{timeout, _} -> {error, timeout}
-  end.
-
+  gen_server:call(Pid, {send_sync, Request, Timeout}, Timeout).
 
 %%====================================================================
 %% @doc Execute synchronous tdlib request.
