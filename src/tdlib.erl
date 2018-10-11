@@ -396,6 +396,7 @@ handle_cast({auth_state, AuthState}, State) ->
   {noreply, State#state{auth_state = AuthState}};
 
 handle_cast({send, Request}, State=#state{tdlib = Tdlib}) ->
+  lager:warning("sending: ~ts", [Request]),
   tdlib_nif:send(Tdlib, Request),
   {noreply, State};
 
