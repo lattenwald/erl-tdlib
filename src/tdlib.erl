@@ -295,6 +295,8 @@ handle_info({received, {ok, Msg}}, State=#state{extra = Extra, handlers = Handle
       false -> null
     end,
 
+  lager:warn("Received msg: ~p", [Msg]),
+
   case SyncReply of
     null ->
       case lists:keyfind(<<"@type">>, 1, Data) of
@@ -310,6 +312,8 @@ handle_info({received, {ok, Msg}}, State=#state{extra = Extra, handlers = Handle
         sets:to_list(Handlers) );
 
     {ReplyTo, TRef} ->
+      lager:warn("SyncReply: ~p", [SyncReply]),
+      lager:warn("ReplyTo: ~p, TRef: ~p", [ReplyTo, TRef]),
       timer:cancel(TRef),
       gen_server:reply(ReplyTo, Data)
   end,
