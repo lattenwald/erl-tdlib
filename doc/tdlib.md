@@ -116,6 +116,9 @@ __See also:__ [send_sync/3](#send_sync-3).
 
 Send tdlib request and block until response is received.
 
+Inside it's a `gen_server:call`, so expect
+`{timeout, _}` error if you need to handle this.
+
 <a name="set_log_file_path-0"></a>
 
 ### set_log_file_path/0 ###

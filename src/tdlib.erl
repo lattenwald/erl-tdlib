@@ -299,7 +299,7 @@ handle_info({received, {ok, Msg}}, State=#state{extra = Extra, handlers = Handle
         {null, Extra}
     end,
 
-  lager:warning("Received msg: ~p", [Msg]),
+  lager:debug("Received: ~ts", [Msg]),
 
   case SyncReply of
     null ->
@@ -316,8 +316,7 @@ handle_info({received, {ok, Msg}}, State=#state{extra = Extra, handlers = Handle
         sets:to_list(Handlers) );
 
     {ReplyTo, TRef} ->
-      lager:warning("SyncReply: ~p", [SyncReply]),
-      lager:warning("ReplyTo: ~p, TRef: ~p", [ReplyTo, TRef]),
+      lager:debug("ReplyTo: ~p, TRef: ~p", [ReplyTo, TRef]),
       timer:cancel(TRef),
       gen_server:reply(ReplyTo, Data)
   end,
@@ -401,7 +400,7 @@ handle_cast({auth_state, AuthState}, State) ->
   {noreply, State#state{auth_state = AuthState}};
 
 handle_cast({send, Request}, State=#state{tdlib = Tdlib}) ->
-  lager:warning("sending: ~ts", [Request]),
+  lager:debug("Sending: ~ts", [Request]),
   tdlib_nif:send(Tdlib, Request),
   {noreply, State};
 
