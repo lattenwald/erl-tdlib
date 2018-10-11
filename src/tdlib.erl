@@ -11,6 +11,8 @@
 -export([set_log_verbosity_level/1, set_log_file_path/0, set_log_file_path/1, set_log_max_file_size/1]).
 -export([get_handlers/1, get_auth_state/1, get_config/1]).
 
+-export([remove_extra/2]).
+
 -define(RECEIVE_TIMEOUT, 5.0).
 -define(SEND_SYNC_TIMEOUT, 5000).
 
@@ -103,6 +105,7 @@ send(Pid, Request) ->
 %% @doc Send tdlib request and block until response is received.
 %%
 %% @see send_sync/3
+%% @end
 %%====================================================================
 send_sync(Pid, Request) ->
   send_sync(Pid, Request, ?SEND_SYNC_TIMEOUT).
@@ -117,7 +120,7 @@ send_sync(Pid, Request) ->
 %%====================================================================
 send_sync(Pid, Request, Timeout) ->
   try
-    gen_server:call(Pid, {send_sync, Request}, Timeout)
+    gen_server:call(Pid, {send_sync, Request, Timeout}, Timeout)
   catch
     _:{timeout, _} -> {error, timeout}
   end.
@@ -250,6 +253,10 @@ get_auth_state(Pid) ->
 get_config(Pid) ->
   gen_server:call(Pid, get_config).
 
+%% @private
+remove_extra(Pid, Index) ->
+  gen_server:cast(Pid, {remove_extra, Index}).
+
 %%====================================================================
 %% callbacks
 %%====================================================================
@@ -266,43 +273,47 @@ handle_info(init, State) ->
   self() ! poll,
   {noreply, State#state{tdlib = Tdlib}};
 
-handle_info(poll, State=#state{tdlib = Tdlib, handlers = Handlers, extra = Extra}) ->
+handle_info(poll, State=#state{tdlib = Tdlib}) ->
   Parent = self(),
   spawn(fun() ->
             Resp = tdlib_nif:recv(Tdlib, ?RECEIVE_TIMEOUT),
-            lager:debug("recv: ~p", [Resp]),
-            case Resp of
-              {ok, Msg} ->
-                Data = jsx:decode(Msg),
-
-                SyncReply =
-                  case lists:keyfind(<<"@extra">>, 1, Data) of
-                    {_, E} -> maps:get(E, Extra, null);
-                    false -> null
-                  end,
-
-                case SyncReply of
-                  null ->
-                    case lists:keyfind(<<"@type">>, 1, Data) of
-                      {_, <<"updateAuthorizationState">>} ->
-                        handle_auth(Parent, Data);
-                      _ -> ok
-                    end,
-
-                    lists:foreach(
-                      fun(Handler) ->
-                          Handler ! {incoming, Data}
-                      end,
-                      sets:to_list(Handlers) );
-
-                  _ ->
-                    gen_server:reply(SyncReply, Data)
-                end;
-
-              null -> ok
-            end,
-            Parent ! poll
+            Parent ! {received, Resp}
         end),
+  {noreply, State};
+
+handle_info({received, null}, State) ->
+  self() ! poll,
+  {noreply, State};
+
+handle_info({received, {ok, Msg}}, State=#state{extra = Extra, handlers = Handlers}) ->
+  lager:debug("recv: ~p", [Msg]),
+  Data = jsx:decode(Msg),
+
+  SyncReply =
+    case lists:keyfind(<<"@extra">>, 1, Data) of
+      {_, E} -> maps:get(E, Extra, null);
+      false -> null
+    end,
+
+  case SyncReply of
+    null ->
+      case lists:keyfind(<<"@type">>, 1, Data) of
+        {_, <<"updateAuthorizationState">>} ->
+          handle_auth(self(), Data);
+        _ -> ok
+      end,
+
+      lists:foreach(
+        fun(Handler) ->
+            Handler ! {incoming, Data}
+        end,
+        sets:to_list(Handlers) );
+
+    {ReplyTo, TRef} ->
+      timer:cancel(TRef),
+      gen_server:reply(ReplyTo, Data)
+  end,
+  self() ! poll,
   {noreply, State};
 
 handle_info(_Msg, State) ->
@@ -345,10 +356,12 @@ handle_call({execute, Data}, _From, State=#state{tdlib = Tdlib}) ->
   Resp = tdlib_nif:execute(Tdlib, Data),
   {reply, Resp, State};
 
-handle_call({send_sync, Request}, From, State=#state{extra = Extra, extra_index = Index}) ->
+handle_call({send_sync, Request, Timeout}, From, State=#state{extra = Extra, extra_index = Index}) ->
   RequestWithExtra = [{<<"@extra">>, Index} | Request],
-  NewExtra = maps:put(Index, From, Extra),
   NewIndex = Index + 1,
+
+  {ok, TRef} = timer:apply_after(Timeout, ?MODULE, remove_extra, [self(), Index]),
+  NewExtra = maps:put(Index, {From, TRef}, Extra),
   send(self(), RequestWithExtra),
   {noreply, State#state{extra = NewExtra, extra_index = NewIndex}};
 
@@ -395,6 +408,10 @@ handle_cast({auth_code, Code}, State=#state{auth_state = <<"authorizationStateWa
 handle_cast({auth_password, Password}, State=#state{auth_state = <<"authorizationStateWaitPassword">>}) ->
   send(self(), method(<<"checkAuthenticationPassword">>, [{<<"password">>, Password}])),
   {noreply, State};
+
+handle_cast({remove_extra, Index}, State=#state{extra = Extra}) ->
+  NewExtra = maps:remove(Index, Extra),
+  {noreply, State#state{extra = NewExtra}};
 
 handle_cast(_Msg, State) ->
   {noreply, State}.
