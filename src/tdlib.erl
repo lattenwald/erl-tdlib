@@ -287,10 +287,16 @@ handle_info({received, {ok, Msg}}, State=#state{extra = Extra, handlers = Handle
   lager:debug("recv: ~p", [Msg]),
   Data = jsx:decode(Msg),
 
-  SyncReply =
+  {SyncReply, NewExtra} =
     case lists:keyfind(<<"@extra">>, 1, Data) of
-      {_, E} -> maps:get(E, Extra, null);
-      false -> null
+      {_, E} ->
+        case maps:take(E, Extra) of
+          error -> {null, Extra};
+          Other -> Other
+        end;
+
+      false ->
+        {null, Extra}
     end,
 
   lager:warning("Received msg: ~p", [Msg]),
@@ -315,8 +321,9 @@ handle_info({received, {ok, Msg}}, State=#state{extra = Extra, handlers = Handle
       timer:cancel(TRef),
       gen_server:reply(ReplyTo, Data)
   end,
+
   self() ! poll,
-  {noreply, State};
+  {noreply, State#state{extra = NewExtra}};
 
 handle_info(_Msg, State) ->
   {noreply, State}.
