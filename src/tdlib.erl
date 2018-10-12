@@ -7,7 +7,7 @@
 -export([start_link/0, start_link/2]).
 -export([handle_call/3, handle_cast/2, init/1, handle_info/2, code_change/3, terminate/2]).
 -export([register_handler/2, config/2, send/2, execute/2, method/2, send_sync/2, send_sync/3]).
--export([phone_number/2, auth_code/2, auth_password/2]).
+-export([phone_number/2, auth_code/2, auth_code/3, auth_code/4, auth_password/2]).
 -export([set_log_verbosity_level/1, set_log_file_path/0, set_log_file_path/1, set_log_max_file_size/1]).
 -export([get_handlers/1, get_auth_state/1, get_config/1]).
 
@@ -157,7 +157,33 @@ phone_number(Pid, PhoneNumber) when is_binary(PhoneNumber) ->
 %% @param Code should be binary.
 %%====================================================================
 auth_code(Pid, Code) when is_binary(Code) ->
-  gen_server:cast(Pid, {auth_code, Code}).
+  auth_code(Pid, Code, null, null).
+
+%%====================================================================
+%% @doc Send authentication code for unregistered user.
+%%
+%% @param Pid tdlib gen_server pid
+%% @param Code should be binary.
+%% @param FirstName should be binary
+%%====================================================================
+auth_code(Pid, Code, FirstName) ->
+  auth_code(Pid, Code, FirstName, null).
+
+%%====================================================================
+%% @doc Send authentication code for unregistered user.
+%%
+%% @param Pid tdlib gen_server pid
+%% @param Code should be binary.
+%% @param FirstName should be binary
+%% @param LastName should be binary
+%%====================================================================
+auth_code(Pid, Code, FirstName, LastName) ->
+  Request = method(<<"checkAuthenticationCode">>,
+                   lists:filter(fun({_,Val}) -> Val /= null end,
+                                [ {<<"code">>, Code}
+                                , {<<"first_name">>, FirstName}
+                                , {<<"last_name">>, LastName} ] ) ),
+  send_sync(Pid, Request).
 
 %%====================================================================
 %% @doc Send password.
