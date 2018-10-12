@@ -192,8 +192,8 @@ auth_code(Pid, Code, FirstName, LastName) ->
 %% @param Password should be binary.
 %%====================================================================
 auth_password(Pid, Password) when is_binary(Password) ->
-  gen_server:cast(Pid, {auth_password, Password}).
-
+  Request = method(<<"checkAuthenticationPassword">>, [{<<"password">>, Password}]),
+  send_sync(Pid, Request).
 
 
 %%====================================================================
