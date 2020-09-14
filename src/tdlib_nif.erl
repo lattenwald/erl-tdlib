@@ -7,35 +7,36 @@
 -on_load(init/0).
 
 init() ->
-  PrivDir = code:priv_dir(tdlib), %% TODO use some module argument
-  File = filename:join([PrivDir, "crates", "tdlib-nif", "libtdlib_nif.so"]),
+    %% TODO use some module argument
+    PrivDir = code:priv_dir(tdlib),
+    File = filename:join([PrivDir, "crates", "tdlib-nif", "libtdlib_nif.so"]),
 
-  erlang:load_nif(filename:rootname(File), 0).
+    erlang:load_nif(filename:rootname(File), 0).
 
 %%====================================================================
 %% API functions
 %%====================================================================
 
 new() ->
-  exit(nif_lirary_not_loaded).
+    exit(nif_lirary_not_loaded).
 
 send(_, _) ->
-  exit(nif_lirary_not_loaded).
+    exit(nif_lirary_not_loaded).
 
 execute(_, _) ->
-  exit(nif_lirary_not_loaded).
+    exit(nif_lirary_not_loaded).
 
 recv(_, _) ->
-  exit(nif_lirary_not_loaded).
+    exit(nif_lirary_not_loaded).
 
 set_log_verbosity_level(_) ->
-  exit(nif_lirary_not_loaded).
+    exit(nif_lirary_not_loaded).
 
 set_log_file_path(_) ->
-  exit(nif_lirary_not_loaded).
+    exit(nif_lirary_not_loaded).
 
 set_log_max_file_size(_) ->
-  exit(nif_lirary_not_loaded).
+    exit(nif_lirary_not_loaded).
 
 %%====================================================================
 %% Internal functions

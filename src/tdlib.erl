@@ -8,7 +8,12 @@
 -export([handle_call/3, handle_cast/2, init/1, handle_info/2, code_change/3, terminate/2]).
 -export([register_handler/2, config/2, send/2, execute/2, method/2, send_sync/2, send_sync/3]).
 -export([phone_number/2, auth_code/2, auth_code/3, auth_code/4, auth_password/2]).
--export([set_log_verbosity_level/1, set_log_file_path/0, set_log_file_path/1, set_log_max_file_size/1]).
+-export([
+    set_log_verbosity_level/1,
+    set_log_file_path/0, set_log_file_path/1,
+    set_log_max_file_size/1
+]).
+
 -export([get_handlers/1, get_auth_state/1, get_config/1]).
 
 -export([remove_extra/2]).
@@ -16,13 +21,18 @@
 -define(RECEIVE_TIMEOUT, 5.0).
 -define(SEND_SYNC_TIMEOUT, 5000).
 
--record(state, { tdlib = null, handlers, auth_state = null, config = null
-               , extra = #{}, extra_index = 0 }).
+-record(state, {
+    tdlib = null,
+    handlers,
+    auth_state = null,
+    config = null,
+    extra = #{},
+    extra_index = 0
+}).
 
 %%====================================================================
 %% API functions
 %%====================================================================
-
 
 %%====================================================================
 %% @doc Start new tdlib instance.
@@ -30,8 +40,7 @@
 %% @returns <code>{ok, Pid}</code>
 %%====================================================================
 start_link() ->
-  gen_server:start_link(?MODULE, null, []).
-
+    gen_server:start_link(?MODULE, null, []).
 
 %%====================================================================
 %% @doc Start new tdlib instance, register it and send config when ready.
@@ -40,8 +49,7 @@ start_link() ->
 %% @returns <code>{ok, Pid}</code>
 %%====================================================================
 start_link(Name, Config) ->
-  gen_server:start_link(Name, ?MODULE, Config, []).
-
+    gen_server:start_link(Name, ?MODULE, Config, []).
 
 %%====================================================================
 %% @doc Add handler to tdlib instance.
@@ -51,8 +59,7 @@ start_link(Name, Config) ->
 %% <code>{incoming, JsonMessage}</code>
 %%====================================================================
 register_handler(Pid, Handler) ->
-  gen_server:call(Pid, {register_handler, Handler}).
-
+    gen_server:call(Pid, {register_handler, Handler}).
 
 %%====================================================================
 %% @doc Send tdlib configuration.
@@ -64,28 +71,27 @@ register_handler(Pid, Handler) ->
 %% default configuration.
 %%====================================================================
 config(Pid, Cfg) ->
-  try
-    case lists:keyfind(api_id, 1, Cfg) of
-      false -> throw({missing_param, api_id});
-      _ -> ok
-    end,
+    try
+        case lists:keyfind(api_id, 1, Cfg) of
+            false -> throw({missing_param, api_id});
+            _ -> ok
+        end,
 
-    case lists:keyfind(api_hash, 1, Cfg) of
-      false -> throw({missing_param, api_hash});
-      _ -> ok
-    end,
+        case lists:keyfind(api_hash, 1, Cfg) of
+            false -> throw({missing_param, api_hash});
+            _ -> ok
+        end,
 
-    case lists:keyfind(database_directory, 1, Cfg) of
-      false -> throw({missing_param, database_directory});
-      _ -> ok
-    end,
+        case lists:keyfind(database_directory, 1, Cfg) of
+            false -> throw({missing_param, database_directory});
+            _ -> ok
+        end,
 
-    gen_server:call(Pid, {config, Cfg})
-  catch
-    _:Err = {missing_param, _} ->
-      {error, Err}
-  end.
-
+        gen_server:call(Pid, {config, Cfg})
+    catch
+        _:Err = {missing_param, _} ->
+            {error, Err}
+    end.
 
 %%====================================================================
 %% @doc Send tdlib request.
@@ -94,12 +100,10 @@ config(Pid, Cfg) ->
 %% @param Request binary message or term to be JSON-encoded.
 %%====================================================================
 send(Pid, Request) when is_binary(Request) ->
-  gen_server:cast(Pid, {send, Request});
-
+    gen_server:cast(Pid, {send, Request});
 send(Pid, Request) ->
-  Msg = jsx:encode(Request),
-  send(Pid, Msg).
-
+    Msg = jsx:encode(Request),
+    send(Pid, Msg).
 
 %%====================================================================
 %% @doc Send tdlib request and block until response is received.
@@ -108,7 +112,7 @@ send(Pid, Request) ->
 %% @end
 %%====================================================================
 send_sync(Pid, Request) ->
-  send_sync(Pid, Request, ?SEND_SYNC_TIMEOUT).
+    send_sync(Pid, Request, ?SEND_SYNC_TIMEOUT).
 
 %%====================================================================
 %% @doc Send tdlib request and block until response is received.
@@ -122,7 +126,7 @@ send_sync(Pid, Request) ->
 %% @returns decoded response
 %%====================================================================
 send_sync(Pid, Request, Timeout) ->
-  gen_server:call(Pid, {send_sync, Request, Timeout}, Timeout).
+    gen_server:call(Pid, {send_sync, Request, Timeout}, Timeout).
 
 %%====================================================================
 %% @doc Execute synchronous tdlib request.
@@ -134,12 +138,10 @@ send_sync(Pid, Request, Timeout) ->
 %% <a href="https://core.telegram.org/tdlib/docs/td__json__client_8h.html#a6d6c76380793072d4a9ce3c71ba0f1cf"><tt>tdlib execute method documentation</tt></a>
 %%====================================================================
 execute(Pid, Request) when is_binary(Request) ->
-  gen_server:call(Pid, {execute, Request});
-
+    gen_server:call(Pid, {execute, Request});
 execute(Pid, Request) ->
-  Msg = jsx:encode(Request),
-  execute(Pid, Msg).
-
+    Msg = jsx:encode(Request),
+    execute(Pid, Msg).
 
 %%====================================================================
 %% @doc Send phone number.
@@ -148,7 +150,7 @@ execute(Pid, Request) ->
 %% @param PhoneNumber should be binary.
 %%====================================================================
 phone_number(Pid, PhoneNumber) when is_binary(PhoneNumber) ->
-  gen_server:cast(Pid, {phone_number, PhoneNumber}).
+    gen_server:cast(Pid, {phone_number, PhoneNumber}).
 
 %%====================================================================
 %% @doc Send authentication code.
@@ -157,7 +159,7 @@ phone_number(Pid, PhoneNumber) when is_binary(PhoneNumber) ->
 %% @param Code should be binary.
 %%====================================================================
 auth_code(Pid, Code) when is_binary(Code) ->
-  auth_code(Pid, Code, null, null).
+    auth_code(Pid, Code, null, null).
 
 %%====================================================================
 %% @doc Send authentication code for unregistered user.
@@ -167,7 +169,7 @@ auth_code(Pid, Code) when is_binary(Code) ->
 %% @param FirstName should be binary
 %%====================================================================
 auth_code(Pid, Code, FirstName) ->
-  auth_code(Pid, Code, FirstName, null).
+    auth_code(Pid, Code, FirstName, null).
 
 %%====================================================================
 %% @doc Send authentication code for unregistered user.
@@ -178,12 +180,18 @@ auth_code(Pid, Code, FirstName) ->
 %% @param LastName should be binary
 %%====================================================================
 auth_code(Pid, Code, FirstName, LastName) ->
-  Request = method(<<"checkAuthenticationCode">>,
-                   lists:filter(fun({_,Val}) -> Val /= null end,
-                                [ {<<"code">>, Code}
-                                , {<<"first_name">>, FirstName}
-                                , {<<"last_name">>, LastName} ] ) ),
-  send_sync(Pid, Request).
+    Request = method(
+        <<"checkAuthenticationCode">>,
+        lists:filter(
+            fun({_, Val}) -> Val /= null end,
+            [
+                {<<"code">>, Code},
+                {<<"first_name">>, FirstName},
+                {<<"last_name">>, LastName}
+            ]
+        )
+    ),
+    send_sync(Pid, Request).
 
 %%====================================================================
 %% @doc Send password.
@@ -192,9 +200,8 @@ auth_code(Pid, Code, FirstName, LastName) ->
 %% @param Password should be binary.
 %%====================================================================
 auth_password(Pid, Password) when is_binary(Password) ->
-  Request = method(<<"checkAuthenticationPassword">>, [{<<"password">>, Password}]),
-  send_sync(Pid, Request).
-
+    Request = method(<<"checkAuthenticationPassword">>, [{<<"password">>, Password}]),
+    send_sync(Pid, Request).
 
 %%====================================================================
 %% @doc Set log logging behaviour to default.
@@ -206,7 +213,7 @@ auth_password(Pid, Password) when is_binary(Password) ->
 %% @end
 %%====================================================================
 set_log_file_path() ->
-  tdlib_nif:set_log_file_path(nil).
+    tdlib_nif:set_log_file_path(nil).
 
 %%====================================================================
 %% @doc Set log file path.
@@ -221,8 +228,7 @@ set_log_file_path() ->
 %% @end
 %%====================================================================
 set_log_file_path(Path) ->
-  tdlib_nif:set_log_file_path(Path).
-
+    tdlib_nif:set_log_file_path(Path).
 
 %%====================================================================
 %% @doc Set tdlib log verbosity level.
@@ -238,7 +244,7 @@ set_log_file_path(Path) ->
 %% logging.
 %%====================================================================
 set_log_verbosity_level(Level) ->
-  tdlib_nif:set_log_verbosity_level(Level).
+    tdlib_nif:set_log_verbosity_level(Level).
 
 %%====================================================================
 %% @doc Set max log file size.
@@ -251,7 +257,7 @@ set_log_verbosity_level(Level) ->
 %% log is written before the file will be auto-rotated. Should be positive.
 %%====================================================================
 set_log_max_file_size(Size) ->
-  tdlib_nif:set_log_max_file_size(Size).
+    tdlib_nif:set_log_max_file_size(Size).
 
 %%====================================================================
 %% @doc Get list of current handlers.
@@ -259,7 +265,7 @@ set_log_max_file_size(Size) ->
 %% @param Pid tdlib gen_server pid
 %%====================================================================
 get_handlers(Pid) ->
-  gen_server:call(Pid, get_handlers).
+    gen_server:call(Pid, get_handlers).
 
 %%====================================================================
 %% @doc Get current auth state of tdlib.
@@ -267,7 +273,7 @@ get_handlers(Pid) ->
 %% @param Pid tdlib gen_server pid
 %%====================================================================
 get_auth_state(Pid) ->
-  gen_server:call(Pid, get_auth_state).
+    gen_server:call(Pid, get_auth_state).
 
 %%====================================================================
 %% @doc Get tdlib configuration.
@@ -275,11 +281,11 @@ get_auth_state(Pid) ->
 %% @param Pid tdlib gen_server pid
 %%====================================================================
 get_config(Pid) ->
-  gen_server:call(Pid, get_config).
+    gen_server:call(Pid, get_config).
 
 %% @private
 remove_extra(Pid, Index) ->
-  gen_server:cast(Pid, {remove_extra, Index}).
+    gen_server:cast(Pid, {remove_extra, Index}).
 
 %%====================================================================
 %% callbacks
@@ -287,171 +293,177 @@ remove_extra(Pid, Index) ->
 
 %% @private
 init(Config) ->
-  self() ! init,
-  {ok, #state{config = Config, handlers = sets:new()}}.
-
+    self() ! init,
+    {ok, #state{config = Config, handlers = sets:new()}}.
 
 %% @private
 handle_info(init, State) ->
-  {ok, Tdlib} = tdlib_nif:new(),
-  self() ! poll,
-  {noreply, State#state{tdlib = Tdlib}};
-
-handle_info(poll, State=#state{tdlib = Tdlib}) ->
-  Parent = self(),
-  spawn(fun() ->
-            Resp = tdlib_nif:recv(Tdlib, ?RECEIVE_TIMEOUT),
-            Parent ! {received, Resp}
-        end),
-  {noreply, State};
-
+    {ok, Tdlib} = tdlib_nif:new(),
+    self() ! poll,
+    {noreply, State#state{tdlib = Tdlib}};
+handle_info(poll, State = #state{tdlib = Tdlib}) ->
+    Parent = self(),
+    spawn(fun() ->
+        Resp = tdlib_nif:recv(Tdlib, ?RECEIVE_TIMEOUT),
+        Parent ! {received, Resp}
+    end),
+    {noreply, State};
 handle_info({received, null}, State) ->
-  self() ! poll,
-  {noreply, State};
+    self() ! poll,
+    {noreply, State};
+handle_info({received, {ok, Msg}}, State = #state{extra = Extra, handlers = Handlers}) ->
+    lager:debug("recv: ~p", [Msg]),
+    Data = jsx:decode(Msg),
 
-handle_info({received, {ok, Msg}}, State=#state{extra = Extra, handlers = Handlers}) ->
-  lager:debug("recv: ~p", [Msg]),
-  Data = jsx:decode(Msg),
+    {SyncReply, NewExtra} =
+        case maps:get(<<"@extra">>, Data, null) of
+            null ->
+                {null, Extra};
+            E ->
+                case maps:take(E, Extra) of
+                    error -> {null, Extra};
+                    Other -> Other
+                end
+        end,
 
-  {SyncReply, NewExtra} =
-    case maps:get(<<"@extra">>, Data, null) of
-      null -> {null,  Extra};
-      E ->
-        case maps:take(E, Extra) of
-          error -> {null, Extra};
-          Other -> Other
-        end
+    lager:debug("Received: ~ts", [Msg]),
+
+    case SyncReply of
+        null ->
+            case lists:keyfind(<<"@type">>, 1, Data) of
+                {_, <<"updateAuthorizationState">>} ->
+                    handle_auth(self(), Data);
+                _ ->
+                    ok
+            end,
+
+            lists:foreach(
+                fun(Handler) ->
+                    Handler ! {incoming, Data}
+                end,
+                sets:to_list(Handlers)
+            );
+        {ReplyTo, TRef} ->
+            lager:debug("ReplyTo: ~p, TRef: ~p", [ReplyTo, TRef]),
+            timer:cancel(TRef),
+            gen_server:reply(ReplyTo, Data)
     end,
 
-  lager:debug("Received: ~ts", [Msg]),
-
-  case SyncReply of
-    null ->
-      case lists:keyfind(<<"@type">>, 1, Data) of
-        {_, <<"updateAuthorizationState">>} ->
-          handle_auth(self(), Data);
-        _ -> ok
-      end,
-
-      lists:foreach(
-        fun(Handler) ->
-            Handler ! {incoming, Data}
-        end,
-        sets:to_list(Handlers) );
-
-    {ReplyTo, TRef} ->
-      lager:debug("ReplyTo: ~p, TRef: ~p", [ReplyTo, TRef]),
-      timer:cancel(TRef),
-      gen_server:reply(ReplyTo, Data)
-  end,
-
-  self() ! poll,
-  {noreply, State#state{extra = NewExtra}};
-
+    self() ! poll,
+    {noreply, State#state{extra = NewExtra}};
 handle_info(_Msg, State) ->
-  {noreply, State}.
-
+    {noreply, State}.
 
 %% @private
-handle_call({config, Cfg}, _From, State=#state{auth_state = <<"authorizationStateWaitTdlibParameters">>}) ->
-  DefaultConfig =
-    [ {<<"application_version">>, <<"Unknown">>},
-      {<<"device_model">>, <<"Unknown">>},
-      {<<"enable_storage_optimizer">>, true},
-      {<<"files_directory">>, null},
-      {<<"ignore_file_names">>, true},
-      {<<"system_language_code">>, <<"en">>},
-      {<<"system_version">>, <<"Unknown">>},
-      {<<"use_chat_info_database">>, true},
-      {<<"use_file_database">>, true},
-      {<<"use_message_database">>, true},
-      {<<"use_secret_chats">>, false},
-      {<<"use_test_dc">>, false} ],
+handle_call(
+    {config, Cfg},
+    _From,
+    State = #state{auth_state = <<"authorizationStateWaitTdlibParameters">>}
+) ->
+    DefaultConfig = [
+        {<<"application_version">>, <<"Unknown">>},
+        {<<"device_model">>, <<"Unknown">>},
+        {<<"enable_storage_optimizer">>, true},
+        {<<"files_directory">>, null},
+        {<<"ignore_file_names">>, true},
+        {<<"system_language_code">>, <<"en">>},
+        {<<"system_version">>, <<"Unknown">>},
+        {<<"use_chat_info_database">>, true},
+        {<<"use_file_database">>, true},
+        {<<"use_message_database">>, true},
+        {<<"use_secret_chats">>, false},
+        {<<"use_test_dc">>, false}
+    ],
 
-  Config = lists:foldl(fun({Key, Val}, Acc) ->
-                           Key_ = case Key of
-                                    _ when is_atom(Key) -> atom_to_binary(Key, utf8);
-                                    _ when is_list(Key) -> list_to_binary(Key);
-                                    _ when is_binary(Key) -> Key
-                                  end,
-                           lists:keystore(Key_, 1, Acc, {Key_, Val})
-                       end,
-                       DefaultConfig, Cfg),
+    Config = lists:foldl(
+        fun({Key, Val}, Acc) ->
+            Key_ =
+                case Key of
+                    _ when is_atom(Key) -> atom_to_binary(Key, utf8);
+                    _ when is_list(Key) -> list_to_binary(Key);
+                    _ when is_binary(Key) -> Key
+                end,
+            lists:keystore(Key_, 1, Acc, {Key_, Val})
+        end,
+        DefaultConfig,
+        Cfg
+    ),
 
-  Request = method(setTdlibParameters, [{parameters, Config}]),
+    Request = method(setTdlibParameters, [{parameters, Config}]),
 
-  send(self(), Request),
+    send(self(), Request),
 
-  {reply, Cfg, State#state{config = Config}};
+    {reply, Cfg, State#state{config = Config}};
+handle_call({execute, Data}, _From, State = #state{tdlib = Tdlib}) ->
+    Resp = tdlib_nif:execute(Tdlib, Data),
+    {reply, Resp, State};
+handle_call(
+    {send_sync, Request, Timeout},
+    From,
+    State = #state{extra = Extra, extra_index = Index}
+) ->
+    RequestWithExtra = [{<<"@extra">>, Index} | Request],
+    NewIndex = Index + 1,
 
-handle_call({execute, Data}, _From, State=#state{tdlib = Tdlib}) ->
-  Resp = tdlib_nif:execute(Tdlib, Data),
-  {reply, Resp, State};
-
-handle_call({send_sync, Request, Timeout}, From, State=#state{extra = Extra, extra_index = Index}) ->
-  RequestWithExtra = [{<<"@extra">>, Index} | Request],
-  NewIndex = Index + 1,
-
-  {ok, TRef} = timer:apply_after(Timeout, ?MODULE, remove_extra, [self(), Index]),
-  NewExtra = maps:put(Index, {From, TRef}, Extra),
-  send(self(), RequestWithExtra),
-  {noreply, State#state{extra = NewExtra, extra_index = NewIndex}};
-
-handle_call({register_handler, Handler}, _From, State=#state{handlers = Handlers}) ->
-  NewHandlers = sets:add_element(Handler, Handlers),
-  {reply, ok, State#state{handlers = NewHandlers}};
-
-handle_call(get_handlers, _From, State=#state{handlers = Handlers}) ->
-  {reply, Handlers, State};
-
-handle_call(get_auth_state, _From, State=#state{auth_state = AuthState}) ->
-  {reply, AuthState, State};
-
-handle_call(get_config, _From, State=#state{config = Config}) ->
-  {reply, Config, State};
-
+    {ok, TRef} = timer:apply_after(Timeout, ?MODULE, remove_extra, [self(), Index]),
+    NewExtra = maps:put(Index, {From, TRef}, Extra),
+    send(self(), RequestWithExtra),
+    {noreply, State#state{extra = NewExtra, extra_index = NewIndex}};
+handle_call({register_handler, Handler}, _From, State = #state{handlers = Handlers}) ->
+    NewHandlers = sets:add_element(Handler, Handlers),
+    {reply, ok, State#state{handlers = NewHandlers}};
+handle_call(get_handlers, _From, State = #state{handlers = Handlers}) ->
+    {reply, Handlers, State};
+handle_call(get_auth_state, _From, State = #state{auth_state = AuthState}) ->
+    {reply, AuthState, State};
+handle_call(get_config, _From, State = #state{config = Config}) ->
+    {reply, Config, State};
 handle_call(_Msg, _From, State) ->
-  {reply, ok, State}.
-
+    {reply, ok, State}.
 
 %% @private
-handle_cast(send_config, State=#state{config = Config}) when Config /= null ->
-  Parent = self(),
-  spawn(fun() -> config(Parent, Config) end),
-  {noreply, State};
-
+handle_cast(send_config, State = #state{config = Config}) when Config /= null ->
+    Parent = self(),
+    spawn(fun() -> config(Parent, Config) end),
+    {noreply, State};
 handle_cast({auth_state, AuthState}, State) ->
-  {noreply, State#state{auth_state = AuthState}};
-
-handle_cast({send, Request}, State=#state{tdlib = Tdlib}) ->
-  lager:debug("Sending: ~ts", [Request]),
-  tdlib_nif:send(Tdlib, Request),
-  {noreply, State};
-
-handle_cast({phone_number, PhoneNumber}, State=#state{auth_state = <<"authorizationStateWaitPhoneNumber">>}) ->
-  send(self(), method(<<"setAuthenticationPhoneNumber">>,
-                      [{<<"phone_number">>, PhoneNumber},
-                       {<<"allow_flash_call">>, false}])),
-  {noreply, State};
-
-handle_cast({auth_code, Code}, State=#state{auth_state = <<"authorizationStateWaitCode">>}) ->
-  send(self(), method(<<"checkAuthenticationCode">>, [{<<"code">>, Code}])),
-  {noreply, State};
-
-handle_cast({auth_password, Password}, State=#state{auth_state = <<"authorizationStateWaitPassword">>}) ->
-  send(self(), method(<<"checkAuthenticationPassword">>, [{<<"password">>, Password}])),
-  {noreply, State};
-
-handle_cast({remove_extra, Index}, State=#state{extra = Extra}) ->
-  NewExtra = maps:remove(Index, Extra),
-  {noreply, State#state{extra = NewExtra}};
-
+    {noreply, State#state{auth_state = AuthState}};
+handle_cast({send, Request}, State = #state{tdlib = Tdlib}) ->
+    lager:debug("Sending: ~ts", [Request]),
+    tdlib_nif:send(Tdlib, Request),
+    {noreply, State};
+handle_cast(
+    {phone_number, PhoneNumber},
+    State = #state{auth_state = <<"authorizationStateWaitPhoneNumber">>}
+) ->
+    send(
+        self(),
+        method(
+            <<"setAuthenticationPhoneNumber">>,
+            [
+                {<<"phone_number">>, PhoneNumber},
+                {<<"allow_flash_call">>, false}
+            ]
+        )
+    ),
+    {noreply, State};
+handle_cast({auth_code, Code}, State = #state{auth_state = <<"authorizationStateWaitCode">>}) ->
+    send(self(), method(<<"checkAuthenticationCode">>, [{<<"code">>, Code}])),
+    {noreply, State};
+handle_cast(
+    {auth_password, Password},
+    State = #state{auth_state = <<"authorizationStateWaitPassword">>}
+) ->
+    send(self(), method(<<"checkAuthenticationPassword">>, [{<<"password">>, Password}])),
+    {noreply, State};
+handle_cast({remove_extra, Index}, State = #state{extra = Extra}) ->
+    NewExtra = maps:remove(Index, Extra),
+    {noreply, State#state{extra = NewExtra}};
 handle_cast(_Msg, State) ->
-  {noreply, State}.
-
+    {noreply, State}.
 
 %% @private
-code_change(_OldVsn, State, _Extra) -> { ok, State }.
+code_change(_OldVsn, State, _Extra) -> {ok, State}.
 
 %% @private
 terminate(_, _) -> ok.
@@ -466,34 +478,35 @@ method(Type, Params) ->
 
 %% @private
 handle_auth(Pid, Data) ->
-  {_, AuthState} = lists:keyfind(<<"authorization_state">>, 1, Data),
-  {_, AuthStateType} = lists:keyfind(<<"@type">>, 1, AuthState),
-  set_auth_state(Pid, AuthStateType),
-  case AuthStateType of
-    <<"authorizationStateWaitTdlibParameters">> ->
-      send_config(Pid);
-
-    <<"authorizationStateWaitEncryptionKey">> ->
-      send(Pid, method(<<"checkDatabaseEncryptionKey">>,
-                       [{<<"encryption_key">>, null}]));
-
-    <<"setAuthenticationPhoneNumber">> ->
-      lager:info("Waiting for phone number");
-
-    <<"checkAuthenticationCode">> ->
-      lager:info("Waiiting for authentication code");
-
-    <<"checkAuthenticationPassword">> ->
-      lager:info("Waiiting for password");
-
-    _ -> ok
-  end.
+    {_, AuthState} = lists:keyfind(<<"authorization_state">>, 1, Data),
+    {_, AuthStateType} = lists:keyfind(<<"@type">>, 1, AuthState),
+    set_auth_state(Pid, AuthStateType),
+    case AuthStateType of
+        <<"authorizationStateWaitTdlibParameters">> ->
+            send_config(Pid);
+        <<"authorizationStateWaitEncryptionKey">> ->
+            send(
+                Pid,
+                method(
+                    <<"checkDatabaseEncryptionKey">>,
+                    [{<<"encryption_key">>, null}]
+                )
+            );
+        <<"setAuthenticationPhoneNumber">> ->
+            lager:info("Waiting for phone number");
+        <<"checkAuthenticationCode">> ->
+            lager:info("Waiiting for authentication code");
+        <<"checkAuthenticationPassword">> ->
+            lager:info("Waiiting for password");
+        _ ->
+            ok
+    end.
 
 %% @private
 set_auth_state(Pid, AuthStateType) ->
-  lager:info("setting auth state to ~p", [AuthStateType]),
-  gen_server:cast(Pid, {auth_state, AuthStateType}).
+    lager:info("setting auth state to ~p", [AuthStateType]),
+    gen_server:cast(Pid, {auth_state, AuthStateType}).
 
 %% @private
 send_config(Pid) ->
-  gen_server:cast(Pid, send_config).
+    gen_server:cast(Pid, send_config).

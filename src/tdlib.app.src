@@ -1,18 +1,16 @@
-{application, tdlib,
- [{description, "An OTP library"},
-  {vsn, "0.1.0"},
-  {registered, []},
-  {applications,
-   [kernel,
-    stdlib,
-	lager
-   ]},
-  {env,
-   [ { lager, [ { handlers,
-				  [ { lager_console_backend, [{level, debug}] } ] } ] } ] },
-  {modules, []},
+{application, tdlib, [
+    {description, "An OTP library"},
+    {vsn, "0.1.0"},
+    {registered, []},
+    {applications, [
+        kernel,
+        stdlib,
+        lager
+    ]},
+    {env, [{lager, [{handlers, [{lager_console_backend, [{level, debug}]}]}]}]},
+    {modules, []},
 
-  {maintainers, []},
-  {licenses, ["Apache 2.0"]},
-  {links, []}
- ]}.
+    {maintainers, []},
+    {licenses, ["Apache 2.0"]},
+    {links, []}
+]}.
