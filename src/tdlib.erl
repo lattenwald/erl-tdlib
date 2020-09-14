@@ -314,15 +314,13 @@ handle_info({received, {ok, Msg}}, State=#state{extra = Extra, handlers = Handle
   Data = jsx:decode(Msg),
 
   {SyncReply, NewExtra} =
-    case lists:keyfind(<<"@extra">>, 1, Data) of
-      {_, E} ->
+    case maps:get(<<"@extra">>, Data, null) of
+      null -> {null,  Extra};
+      E ->
         case maps:take(E, Extra) of
           error -> {null, Extra};
           Other -> Other
-        end;
-
-      false ->
-        {null, Extra}
+        end
     end,
 
   lager:debug("Received: ~ts", [Msg]),
