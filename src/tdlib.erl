@@ -313,7 +313,7 @@ handle_info({received, null}, State) ->
     {noreply, State};
 handle_info({received, {ok, Msg}}, State = #state{extra = Extra, handlers = Handlers}) ->
     lager:debug("recv: ~p", [Msg]),
-    Data = jsx:decode(Msg),
+    Data = jsx:decode(Msg, [{return_maps, true}]),
 
     {SyncReply, NewExtra} =
         case maps:get(<<"@extra">>, Data, null) of
@@ -330,8 +330,8 @@ handle_info({received, {ok, Msg}}, State = #state{extra = Extra, handlers = Hand
 
     case SyncReply of
         null ->
-            case lists:keyfind(<<"@type">>, 1, Data) of
-                {_, <<"updateAuthorizationState">>} ->
+            case maps:get(<<"@type">>, Data) of
+                <<"updateAuthorizationState">> ->
                     handle_auth(self(), Data);
                 _ ->
                     ok
@@ -478,8 +478,8 @@ method(Type, Params) ->
 
 %% @private
 handle_auth(Pid, Data) ->
-    {_, AuthState} = lists:keyfind(<<"authorization_state">>, 1, Data),
-    {_, AuthStateType} = lists:keyfind(<<"@type">>, 1, AuthState),
+    AuthState = maps:get(<<"authorization_state">>, Data),
+    AuthStateType = maps:get(<<"@type">>, AuthState),
     set_auth_state(Pid, AuthStateType),
     case AuthStateType of
         <<"authorizationStateWaitTdlibParameters">> ->
