@@ -1,7 +1,5 @@
 -module(tdlib).
 
--compile([{parse_transform, lager_transform}]).
-
 -behaviour(gen_server).
 
 -export([start_link/0, start_link/2]).
