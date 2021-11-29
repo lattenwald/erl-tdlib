@@ -310,7 +310,7 @@ handle_info({received, null}, State) ->
     self() ! poll,
     {noreply, State};
 handle_info({received, {ok, Msg}}, State = #state{extra = Extra, handlers = Handlers}) ->
-    lager:debug("recv: ~p", [Msg]),
+    lager:debug("[~p] recv: ~p", [self(), Msg]),
     Data = jsx:decode(Msg, [{return_maps, true}]),
 
     {SyncReply, NewExtra} =
@@ -324,7 +324,7 @@ handle_info({received, {ok, Msg}}, State = #state{extra = Extra, handlers = Hand
                 end
         end,
 
-    lager:debug("Received: ~ts", [Msg]),
+    lager:debug("[~p] Received: ~ts", [self(), Msg]),
 
     case SyncReply of
         null ->
@@ -342,7 +342,7 @@ handle_info({received, {ok, Msg}}, State = #state{extra = Extra, handlers = Hand
                 sets:to_list(Handlers)
             );
         {ReplyTo, TRef} ->
-            lager:debug("ReplyTo: ~p, TRef: ~p", [ReplyTo, TRef]),
+            lager:debug("[~p] ReplyTo: ~p, TRef: ~p", [self(), ReplyTo, TRef]),
             timer:cancel(TRef),
             gen_server:reply(ReplyTo, Data)
     end,
@@ -427,7 +427,7 @@ handle_cast(send_config, State = #state{config = Config}) when Config /= null ->
 handle_cast({auth_state, AuthState}, State) ->
     {noreply, State#state{auth_state = AuthState}};
 handle_cast({send, Request}, State = #state{tdlib = Tdlib}) ->
-    lager:debug("Sending: ~ts", [Request]),
+    lager:debug("[~p] Sending: ~ts", [self(), Request]),
     tdlib_nif:send(Tdlib, Request),
     {noreply, State};
 handle_cast(
@@ -491,18 +491,18 @@ handle_auth(Pid, Data) ->
                 )
             );
         <<"setAuthenticationPhoneNumber">> ->
-            lager:info("Waiting for phone number");
+            lager:info("[~p] Waiting for phone number", [self()]);
         <<"checkAuthenticationCode">> ->
-            lager:info("Waiiting for authentication code");
+            lager:info("[~p] Waiting for authentication code", [self()]);
         <<"checkAuthenticationPassword">> ->
-            lager:info("Waiiting for password");
+            lager:info("[~p] Waiting for password", [self()]);
         _ ->
             ok
     end.
 
 %% @private
 set_auth_state(Pid, AuthStateType) ->
-    lager:info("setting auth state to ~p", [AuthStateType]),
+    lager:info("[~p] setting auth state to ~p", [Pid, AuthStateType]),
     gen_server:cast(Pid, {auth_state, AuthStateType}).
 
 %% @private
