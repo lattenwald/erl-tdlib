@@ -434,16 +434,20 @@ handle_cast(
     {phone_number, PhoneNumber},
     State = #state{auth_state = <<"authorizationStateWaitPhoneNumber">>}
 ) ->
+    Settings = method(<<"phoneNumberAuthenticationSettings">>,
+                      [{<<"allow_flash_call">>, false},
+                       {<<"is_current_phone_number">>, false},
+                       {<<"allow_sms_retriever_api">>, false}]),
     send(
-        self(),
-        method(
-            <<"setAuthenticationPhoneNumber">>,
-            [
-                {<<"phone_number">>, PhoneNumber},
-                {<<"allow_flash_call">>, false}
-            ]
-        )
-    ),
+      self(),
+      method(
+        <<"setAuthenticationPhoneNumber">>,
+        [
+         {<<"phone_number">>, PhoneNumber},
+         {<<"settings">>, Settings}
+        ]
+       )
+     ),
     {noreply, State};
 handle_cast({auth_code, Code}, State = #state{auth_state = <<"authorizationStateWaitCode">>}) ->
     send(self(), method(<<"checkAuthenticationCode">>, [{<<"code">>, Code}])),
