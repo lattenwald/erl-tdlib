@@ -7,7 +7,7 @@
 
 init() ->
     PrivDir = code:priv_dir(tdlib),
-    File = filename:join([PrivDir, "crates", "tdlib-nif", "libtdlib_nif.so"]),
+    File = filename:join([PrivDir, "libtdlib_nif.so"]),
 
     erlang:load_nif(filename:rootname(File), 0).
 
