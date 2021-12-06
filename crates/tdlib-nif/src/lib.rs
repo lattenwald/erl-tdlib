@@ -64,28 +64,6 @@ fn receive<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
     }
 }
 
-fn set_log_verbosity_level<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let level: i32 = args[0].decode()?;
-    match Tdlib::set_log_verbosity_level(level) {
-        Ok(()) => Ok(atoms::ok().encode(env)),
-        Err(err) => Ok((atoms::error(), err).encode(env)),
-    }
-}
-
-fn set_log_max_file_size<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let size: i64 = args[0].decode()?;
-    Tdlib::set_log_max_file_size(size);
-    Ok(atoms::ok().encode(env))
-}
-
-fn set_log_file_path<'a>(env: Env<'a>, args: &[Term<'a>]) -> Result<Term<'a>, Error> {
-    let path: Option<&str> = args[0].decode()?;
-    match Tdlib::set_log_file_path(path) {
-        true => Ok(atoms::ok().encode(env)),
-        false => Ok(atoms::error().encode(env)),
-    }
-}
-
 rustler_export_nifs!(
     "tdlib_nif",
     [
@@ -93,9 +71,6 @@ rustler_export_nifs!(
         ("send", 2, send),
         ("execute", 2, execute),
         ("recv", 2, receive, SchedulerFlags::DirtyIo),
-        ("set_log_verbosity_level", 1, set_log_verbosity_level),
-        ("set_log_max_file_size", 1, set_log_max_file_size),
-        ("set_log_file_path", 1, set_log_file_path)
     ],
     Some(on_load)
 );
