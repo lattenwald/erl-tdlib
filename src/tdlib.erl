@@ -7,7 +7,7 @@
 -export([register_handler/2, config/2, send/2, execute/2, method/2, send_sync/2, send_sync/3]).
 -export([phone_number/2, auth_code/2, auth_code/3, auth_code/4, auth_password/2]).
 
--export([get_handlers/1, get_auth_state/1, get_config/1]).
+-export([get_handlers/1, get_auth_state/1, get_config/1, get_version/1]).
 
 -export([remove_extra/2]).
 
@@ -15,6 +15,8 @@
 -define(SEND_SYNC_TIMEOUT, 5000).
 
 -record(state, {
+    tdlib_version = null,
+    tdlib_commit = null,
     tdlib = null,
     handlers,
     auth_state = null,
@@ -225,6 +227,14 @@ remove_extra(Pid, Index) ->
     gen_server:cast(Pid, {remove_extra, Index}).
 
 %%====================================================================
+%% @doc Get tdlib version.
+%%
+%% @param Pid tdlib gen_server pid
+%%====================================================================
+get_version(Pid) ->
+    gen_server:call(Pid, get_version).
+
+%%====================================================================
 %% callbacks
 %%====================================================================
 
@@ -287,7 +297,17 @@ handle_info({received, {ok, Msg}}, State = #state{extra = Extra, handlers = Hand
     end,
 
     self() ! poll,
-    {noreply, State#state{extra = NewExtra}};
+
+    NewState = case Data of
+                   #{<<"@type">> := <<"updateOption">>,
+                    <<"name">> := OptionName,
+                    <<"value">> := #{<<"value">> := OptionValue}} ->
+                       update_option(State, OptionName, OptionValue);
+                   _ ->
+                       State
+               end,
+
+    {noreply, NewState#state{extra = NewExtra}};
 handle_info(_Msg, State) ->
     {noreply, State}.
 
@@ -355,6 +375,8 @@ handle_call(get_auth_state, _From, State = #state{auth_state = AuthState}) ->
     {reply, AuthState, State};
 handle_call(get_config, _From, State = #state{config = Config}) ->
     {reply, Config, State};
+handle_call(get_version, _From, State = #state{tdlib_version = Version, tdlib_commit = Commit}) ->
+    {reply, #{version => Version, commit => Commit}, State};
 handle_call(_Msg, _From, State) ->
     {reply, ok, State}.
 
@@ -451,3 +473,11 @@ set_auth_state(Pid, AuthStateType) ->
 %% @private
 send_config(Pid) ->
     gen_server:cast(Pid, send_config).
+
+%% @private
+update_option(State, <<"version">>, Version) ->
+    State#state{tdlib_version = Version};
+update_option(State, <<"commit_hash">>, Commit) ->
+    State#state{tdlib_commit = Commit};
+update_option(State, _, _) ->
+    State.
