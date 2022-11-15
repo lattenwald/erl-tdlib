@@ -67,22 +67,8 @@ register_handler(Pid, Handler) ->
 %%====================================================================
 config(Pid, Cfg) ->
     try
-        case lists:keyfind(api_id, 1, Cfg) of
-            false -> throw({missing_param, api_id});
-            _ -> ok
-        end,
-
-        case lists:keyfind(api_hash, 1, Cfg) of
-            false -> throw({missing_param, api_hash});
-            _ -> ok
-        end,
-
-        case lists:keyfind(database_directory, 1, Cfg) of
-            false -> throw({missing_param, database_directory});
-            _ -> ok
-        end,
-
-        gen_server:call(Pid, {config, Cfg})
+        Config = create_config(Cfg),
+        gen_server:call(Pid, {config, Config})
     catch
         _:Err = {missing_param, _} ->
             {error, Err}
@@ -346,7 +332,7 @@ handle_call(
         Cfg
     ),
 
-    Request = method(setTdlibParameters, [{parameters, Config}]),
+    Request = method(setTdlibParameters, Config),
 
     send(self(), Request),
 
@@ -436,7 +422,9 @@ terminate(_, _) -> ok.
 %%====================================================================
 
 %% @private
-method(Type, Params) ->
+method(Type, Params) when is_map(Params) ->
+    Params#{'@type' => Type};
+method(Type, Params) when is_list(Params) ->
     [{'@type', Type} | Params].
 
 %% @private
@@ -481,3 +469,48 @@ update_option(State, <<"commit_hash">>, Commit) ->
     State#state{tdlib_commit = Commit};
 update_option(State, _, _) ->
     State.
+
+%% @private
+create_config(null) ->
+    null;
+create_config(Cfg) when is_map(Cfg) ->
+    create_config(maps:to_list(Cfg));
+create_config(Cfg) ->
+    DefaultConfig = [
+        {<<"application_version">>, <<"Unknown">>},
+        {<<"device_model">>, <<"Unknown">>},
+        {<<"enable_storage_optimizer">>, true},
+        {<<"files_directory">>, null},
+        {<<"ignore_file_names">>, true},
+        {<<"system_language_code">>, <<"en">>},
+        {<<"system_version">>, null},
+        {<<"use_chat_info_database">>, true},
+        {<<"use_file_database">>, true},
+        {<<"use_message_database">>, true},
+        {<<"use_secret_chats">>, false},
+        {<<"use_test_dc">>, false}
+    ],
+
+    Config = lists:foldl(
+               fun({Key, Val}, Acc) ->
+                       Key_ =
+                       case Key of
+                           _ when is_atom(Key) -> atom_to_binary(Key, utf8);
+                           _ when is_list(Key) -> list_to_binary(Key);
+                           _ when is_binary(Key) -> Key
+                       end,
+                       lists:keystore(Key_, 1, Acc, {Key_, Val})
+               end,
+               DefaultConfig,
+               Cfg
+              ),
+
+    lists:foreach(
+      fun(Name) ->
+              case lists:keyfind(Name, 1, Config) of
+                  false -> throw({missing_param, api_id});
+                  _ -> ok
+              end
+      end, [<<"api_id">>, <<"api_hash">>, <<"database_directory">>]),
+
+    Config.
