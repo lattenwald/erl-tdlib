@@ -24,3 +24,6 @@ priv/*
 
 /tdlib*
 *.org
+
+target
+*.so
