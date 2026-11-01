@@ -2,6 +2,7 @@
 name = "tdlib-nif"
 version = "0.2.0"
 authors = ["Alexander Q <qalexx@gmail.com>"]
+license = "MIT OR Apache-2.0"
 
 [lib]
 name = "tdlib_nif"
